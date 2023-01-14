@@ -2,6 +2,7 @@ import express from 'express';
 import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 import joi from 'joi'
+import dayjs from 'dayjs';
 dotenv.config();
 
 const mongoClient = new MongoClient(process.env.DATABASE_URL);
@@ -18,7 +19,7 @@ app.post('/participants', async (req, res) => {
 
 
     const userSchema = joi.object({
-        name: joi.string().required(),
+        name: joi.string().required()
     })
     const validation = userSchema.validate(req.body)
     if (validation.error) {
@@ -35,17 +36,53 @@ app.post('/participants', async (req, res) => {
         res.sendStatus(500);
     }
 
-
-
+    const hora = dayjs().format('HH:mm:ss')
+    const obj2 = {from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: hora}
     const obj = { name: nome, lastStatus: Date.now() }
     try {
         await db.collection('participants').insertOne(obj)
+        await db.collection('messages').insertOne(obj2)
         res.sendStatus(201);
     } catch (error) {
         console.error(error);
         res.sendStatus(500);
     }
 });
+app.post('/messages', async (req, res) => {
+    const usuario = req.headers.user
+
+    try {
+        const namae = await db.collection('participants').findOne({ name: usuario })
+        if (!namae) {
+            return res.sendStatus(422);
+        }
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+
+    const userSchema = joi.object({
+        to: joi.string().required(),
+        text: joi.string().required(),
+        type: joi.string().valid("message", "private_message").required()
+    })
+    const validation = userSchema.validate(req.body)
+    if (validation.error) {
+        return res.status(422).send(validation.error.details)
+    }
+    const hora = dayjs().format('HH:mm:ss')
+    const obj = {from: usuario, to: req.body.to, text: req.body.text, type: req.body.type, time: hora}
+
+    try {
+        await db.collection('messages').insertOne(obj)
+        res.sendStatus(201);
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+})
+
+
 
 app.get('/participants', async (req, res) => {
     try {
@@ -56,5 +93,27 @@ app.get('/participants', async (req, res) => {
         res.sendStatus(500);
     }
 })
+
+app.get('/messages', async (req, res) => {
+    let limit = req.query.limit
+    const usuario = req.headers.user
+
+    if(!limit){
+        limit = 0
+    }
+    try {
+        const msgs = await db.collection('messages').find().toArray();
+        const msgss = msgs.filter((i) => i.to === usuario || i.to==='Todos' || i.from===usuario)
+        res.send(msgss.slice(-limit));
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+})
+
+
+
+
+
 
 app.listen(5000)
