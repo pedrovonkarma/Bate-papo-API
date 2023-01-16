@@ -81,10 +81,13 @@ app.get('/participants', async (req, res) => {
     }
 })
 app.get('/messages', async (req, res) => {
-    let limit = req.query.limit
+    let limit = Number(req.query.limit)
     const usuario = req.headers.user
     if(!limit){
         limit = 0
+    }
+    if(limit<=0 || typeof limit === 'string'){
+        return res.sendStatus(422)
     }
     try {
         const msgs = await db.collection('messages').find().toArray();
