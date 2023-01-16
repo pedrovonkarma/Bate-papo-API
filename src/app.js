@@ -111,9 +111,54 @@ app.get('/messages', async (req, res) => {
     }
 })
 
+app.post('/status', async (req, res) => {
+    const usuario = req.headers.user
+    try {
+        const namae = await db.collection('participants').findOne({ name: usuario })
+        if (!namae) {
+            return res.sendStatus(404);
+        }
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+
+    try {
+        const namae = await db.collection('participants').updateOne({ name: usuario }, { $set: {lastStatus: Date.now()} })
+        return res.sendStatus(200)
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
 
 
+})
 
 
+async function remover(){
+    let partners
+    let removidos
+    try {
+        partners = await db.collection('participants').find().toArray();
+        partners = partners.filter((i) => ((Date.now())/1000) - ((i.lastStatus)/1000) >10)
+        removidos = partners.map((i) => i.name)
+    } catch (error) {
+        console.error(error);
+    }
+    console.log(partners)
+    console.log(removidos)
+    console.log('pegou as listas')
+    const hora = dayjs().format('HH:mm:ss')
+    const msgs = removidos.map((i) => ({from: i.name, to: "Todos", text: 'sai da sala...', type: 'status', time: {hora}}))
+    try {
+        await db.collection('participants').deleteMany(removidos)
+        await db.collection('messages').insertMany(msgs)
+        return
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+setInterval(remover, 15000);
 
 app.listen(5000)
