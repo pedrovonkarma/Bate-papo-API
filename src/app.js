@@ -83,20 +83,21 @@ app.get('/participants', async (req, res) => {
 app.get('/messages', async (req, res) => {
     let limit = Number(req.query.limit)
     const usuario = req.headers.user
-    if(!limit){
-        limit = 0
-    }
-    if(limit<=0 || typeof limit === 'string'){
-        return res.sendStatus(422)
-    }
-    try {
-        const msgs = await db.collection('messages').find().toArray();
-        const msgss = msgs.filter((i) => i.to === usuario || i.to==='Todos' || i.from===usuario)
-        res.send(msgss.slice(-limit).reverse());
-    } catch (error) {
-        console.error(error);
-        res.sendStatus(500);
-    }
+        if(Object.keys(req.query).length !== 0 && isNaN(req.query.limit)){
+            return res.sendStatus(422)}
+        if(limit<=0){
+            return res.sendStatus(422)
+        }
+        try {
+            const msgs = await db.collection('messages').find().toArray();
+            const msgss = msgs.filter((i) => i.to === usuario || i.to==='Todos' || i.from===usuario)
+            res.send(msgss.slice(-limit).reverse());
+        } catch (error) {
+            console.error(error);
+            res.sendStatus(500);
+        }
+    
+    
 })
 app.post('/status', async (req, res) => {
     const usuario = req.headers.user
