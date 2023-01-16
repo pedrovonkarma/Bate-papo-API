@@ -98,7 +98,7 @@ app.get('/messages', async (req, res) => {
     let limit = req.query.limit
     const usuario = req.headers.user
 
-    if(typeof limit !== 'number' || limit<=0){
+    if(typeof limit === 'string' || limit<=0){
         return res.sendStatus(422)
     }
 
