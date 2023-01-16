@@ -104,7 +104,7 @@ app.get('/messages', async (req, res) => {
     try {
         const msgs = await db.collection('messages').find().toArray();
         const msgss = msgs.filter((i) => i.to === usuario || i.to==='Todos' || i.from===usuario)
-        res.send(msgss.slice(-limit));
+        res.send(msgss.slice(-limit).reverse());
     } catch (error) {
         console.error(error);
         res.sendStatus(500);
@@ -146,13 +146,11 @@ async function remover(){
         console.error(error);
     }
 
-    console.log(partners)
     if(partners.length===0){
         return
     }
-    console.log('pegou as listas')
     const hora = dayjs().format('HH:mm:ss')
-    const msgs = removidos.map((i) => ({from: i, to: "Todos", text: 'sai da sala...', type: 'status', time: {hora}}))
+    const msgs = removidos.map((i) => ({from: i, to: "Todos", text: 'sai da sala...', type: 'status', time: hora}))
     try {
         
         for (let index = 0; index < removidos.length; index++) {
