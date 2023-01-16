@@ -145,13 +145,20 @@ async function remover(){
     } catch (error) {
         console.error(error);
     }
+
     console.log(partners)
-    console.log(removidos)
+    if(partners.length===0){
+        return
+    }
     console.log('pegou as listas')
     const hora = dayjs().format('HH:mm:ss')
-    const msgs = removidos.map((i) => ({from: i.name, to: "Todos", text: 'sai da sala...', type: 'status', time: {hora}}))
+    const msgs = removidos.map((i) => ({from: i, to: "Todos", text: 'sai da sala...', type: 'status', time: {hora}}))
     try {
-        await db.collection('participants').deleteMany(removidos)
+        
+        for (let index = 0; index < removidos.length; index++) {
+            await db.collection('participants').deleteOne({name: removidos[index]})
+            
+        }
         await db.collection('messages').insertMany(msgs)
         return
     } catch (error) {
@@ -159,6 +166,7 @@ async function remover(){
     }
 }
 
-setInterval(remover, 15000);
+
 
 app.listen(5000)
+setInterval(remover, 15000);
