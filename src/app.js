@@ -1,7 +1,7 @@
 import express from 'express';
 import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
-import joi from 'joi'
+import joi, { number } from 'joi'
 import dayjs from 'dayjs';
 dotenv.config();
 
@@ -98,9 +98,10 @@ app.get('/messages', async (req, res) => {
     let limit = req.query.limit
     const usuario = req.headers.user
 
-    if(!limit){
-        limit = 0
+    if(typeof limit !== 'number' || limit<=0){
+        return res.sendStatus(422)
     }
+
     try {
         const msgs = await db.collection('messages').find().toArray();
         const msgss = msgs.filter((i) => i.to === usuario || i.to==='Todos' || i.from===usuario)
